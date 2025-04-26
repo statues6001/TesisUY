@@ -23,8 +23,8 @@ def procesar_imesi(file_path, sheet_name="2023"):
 
     # 2) Calulos.
     # Se generan arrays para guardar resultados
-    monto_imesi_list = []
     imesi_fraction_list = []
+    monto_imesi_list = []
     precio_despues_tasas_list = []
 
     for idx, row in df.iterrows():
@@ -51,15 +51,15 @@ def procesar_imesi(file_path, sheet_name="2023"):
         monto_imesi = precio_despues_de_tasas * imesi_frac
 
         # Guardamos en listas
-        monto_imesi_list.append(monto_imesi)
         imesi_fraction_list.append(imesi_frac)
+        monto_imesi_list.append(monto_imesi)
         precio_despues_tasas_list.append(precio_despues_de_tasas)
 
     # --------------------------------------------------------
     # 3) Insertar las 3 nuevas "columnas" en el DataFrame
     # --------------------------------------------------------
-    df["Monto IMESI"] = monto_imesi_list
     df["IMESI_frac"] = imesi_fraction_list
+    df["Monto IMESI"] = monto_imesi_list
     df["Precio después de tasas"] = precio_despues_tasas_list
 
     # --------------------------------------------------------
@@ -84,19 +84,18 @@ def procesar_imesi(file_path, sheet_name="2023"):
     # 1) Hallar la última columna usada
     last_used_col = ws.max_column
     start_col = last_used_col + 1
-
-    col_monto_imesi = start_col
-    col_imesi_pct = start_col + 1
+    col_imesi_pct = start_col
+    col_monto_imesi = start_col + 1
     col_precio_net = start_col + 2
 
     # 2) Encabezados en la fila 1
-    ws.cell(row=1, column=col_monto_imesi, value="Monto IMESI")
     ws.cell(row=1, column=col_imesi_pct, value="IMESI (%)")
+    ws.cell(row=1, column=col_monto_imesi, value="Monto IMESI")
     ws.cell(row=1, column=col_precio_net, value="Precio después de tasas")
 
     headers = {
-        col_monto_imesi: "Monto IMESI",
         col_imesi_pct: "IMESI (%)",
+        col_monto_imesi: "Monto IMESI",
         col_precio_net: "Precio después de tasas"
     }
 
@@ -113,13 +112,13 @@ def procesar_imesi(file_path, sheet_name="2023"):
     for i, row_df in df.iterrows():
         excel_row = i + start_row
 
-        cell_ime = ws.cell(row=excel_row, column=col_monto_imesi, value=row_df["Monto IMESI"])
-        cell_ime.alignment = center_alignment
-        cell_ime.border = data_border
         c_pct = ws.cell(row=excel_row, column=col_imesi_pct, value=row_df["IMESI_frac"])
         c_pct.number_format = '0.00%'
         c_pct.alignment = center_alignment
         c_pct.border = data_border
+        cell_ime = ws.cell(row=excel_row, column=col_monto_imesi, value=row_df["Monto IMESI"])
+        cell_ime.alignment = center_alignment
+        cell_ime.border = data_border
         cell2 = ws.cell(row=excel_row, column=col_precio_net, value=row_df["Precio después de tasas"])
         cell2.alignment = center_alignment
         cell2.border = data_border
@@ -131,9 +130,7 @@ def procesar_imesi(file_path, sheet_name="2023"):
 
 
 def determinar_imesi_fraction(tipo, cilindrada, combustible, tipo_motor):
-    """
-    Lógica que retorna la fracción de IMESI (por ejemplo, 0.347 para 34,7%).
-    """
+
     # Por defecto 0
     imesi_str = "0"
 
