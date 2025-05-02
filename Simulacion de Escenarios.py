@@ -337,7 +337,7 @@ parametros_escalonados = {
 
 
 def imesi_escalonado_por_categoria(row):
-    # Ya se supone que en el DataFrame los valores están normalizados.
+
     tipo2 = row["Tipo 2"]
     motor = row["Tipo de motor"]
     try:
@@ -369,12 +369,10 @@ def calcular_impacto_imesi(df_in, funcion_imesi_por_fila, elasticidad, nombre_es
                            pct_elasticidad_baratos_bajada=1.5):
     df_calc = df_in.copy()
     df_calc["Nuevo IMESI (%)"] = df_calc.apply(funcion_imesi_por_fila, axis=1)
-    df_calc["Precio sin Impuestos"] = df_calc["Precio después de tasas"]
-    df_calc["Nuevo Monto IMESI (USD)"] = df_calc["Precio sin Impuestos"] * df_calc["Nuevo IMESI (%)"]
-    df_calc["Nuevo Precio Final"] = df_calc["Precio sin Impuestos"] * (1 + df_calc["Nuevo IMESI (%)"]) * (1 + IVA)
-    df_calc["Precio Final Anterior"] = df_calc["Precio Diciembre 2023 USD"]
-    df_calc["Var Precio (%)"] = ((df_calc["Nuevo Precio Final"] - df_calc["Precio Final Anterior"]) / df_calc[
-        "Precio Final Anterior"]).fillna(0)
+    df_calc["Nuevo Monto IMESI (USD)"] = df_calc["Precio después de tasas"] * df_calc["Nuevo IMESI (%)"]
+    df_calc["Nuevo Precio Final"] = df_calc["Precio después de tasas"] * (1 + df_calc["Nuevo IMESI (%)"]) * (1 + IVA)
+    df_calc["Variación Precio (%)"] = ((df_calc["Nuevo Precio Final"] - df_calc["Precio Diciembre 2023 USD"]) / df_calc[
+        "Precio Diciembre 2023 USD"]).fillna(0)
 
     if elasticidad_variable:
         df_calc["% ranking precio"] = df_calc.groupby("Tipo 2")["Nuevo Precio Final"].rank(pct=True, ascending=True)
@@ -382,9 +380,9 @@ def calcular_impacto_imesi(df_in, funcion_imesi_por_fila, elasticidad, nombre_es
 
         def elasticidad_variable_fn(row):
             if row["Segmento 25 % mas barato"]:
-                if row["Var Precio (%)"] > 0:
+                if row["Variación Precio (%)"] > 0:
                     return elasticidad * pct_elasticidad_baratos  # Menos negativa
-                elif row["Var Precio (%)"] < 0:
+                elif row["Variación Precio (%)"] < 0:
                     return elasticidad * pct_elasticidad_baratos_bajada  # Más negativa
                 else:
                     return elasticidad
@@ -396,10 +394,10 @@ def calcular_impacto_imesi(df_in, funcion_imesi_por_fila, elasticidad, nombre_es
         # Si no se usa elasticidad variable, asignar la elasticidad original a la columna
         df_calc["Elasticidad aplicada"] = elasticidad
 
-    df_calc["Ventas Escenario"] = df_calc["Procesados"] * (1 + df_calc["Elasticidad aplicada"] * df_calc["Var Precio (%)"])
+    df_calc["Ventas Escenario"] = df_calc["Procesados"] * (1 + df_calc["Elasticidad aplicada"] * df_calc["Variación Precio (%)"])
     df_calc.loc[df_calc["Ventas Escenario"] < 0, "Ventas Escenario"] = 0
 
-    df_calc["Var Ventas (%)"] = ((df_calc["Ventas Escenario"] - df_calc["Procesados"]) / df_calc[
+    df_calc["Variación Ventas (%)"] = ((df_calc["Ventas Escenario"] - df_calc["Procesados"]) / df_calc[
         "Procesados"]).fillna(0)
     df_calc["Recaudación IMESI Escenario"] = df_calc["Nuevo Monto IMESI (USD)"] * df_calc["Ventas Escenario"]
     df_calc["Recaudación IMESI Año Base"] = df_calc["Monto IMESI"] * df_calc["Procesados"]
@@ -620,7 +618,7 @@ for esc in escenarios:
             cell.alignment = center_alignment
             cell.border = data_border
 
-            if col_name in ["Nuevo IMESI (%)", "Var Precio (%)", "Var Ventas (%)"]:
+            if col_name in ["Nuevo IMESI (%)", "Variación Precio (%)", "Variación Ventas (%)"]:
                 cell.number_format = '0.00%'
 
 
