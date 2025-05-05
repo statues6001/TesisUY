@@ -139,7 +139,7 @@ ax2.set_ylabel("Ventas Totales")
 ax2.set_title("Ventas totales por categoría IMESI")
 
 plt.tight_layout()
-fig.savefig(r'C:\Users\emili\PycharmProjects\TesisUY\Gráficos\13_Boxplot y gráfico de barras de ventas totales.png', dpi=300)
+fig.savefig(r'C:\Users\emili\PycharmProjects\TesisUY\Gráficos\Boxplot CO2vsIMESI y gráfico de ventas totales.png', dpi=300)
 #plt.show()
 
 ##############################################
@@ -176,7 +176,7 @@ fig_hist.text(0.5, 0.04, 'CO₂ NEDC (g/km)', ha='center', fontsize=12)
 fig_hist.text(0.04, 0.5, 'Ventas', va='center', rotation='vertical', fontsize=12)
 
 plt.subplots_adjust(top=0.88, bottom=0.08, left=0.08, right=0.97, hspace=0.5, wspace=0.35)
-fig_hist.savefig(r'C:\Users\emili\PycharmProjects\TesisUY\Gráficos\12_Histograma de CO2, ponderado por ventas.png', dpi=300)
+fig_hist.savefig(r'C:\Users\emili\PycharmProjects\TesisUY\Gráficos\Histograma de CO2, ponderado por ventas.png', dpi=300)
 #plt.show()
 
 #----------------------------------------------------------------------------------------------------------------
@@ -232,5 +232,5 @@ fig.text(0.5, 0.04, '% acumulado de ventas', ha='center', fontsize=12)
 fig.text(0.04, 0.5, 'CO₂ NEDC (g/km)', va='center', rotation='vertical', fontsize=12)
 
 plt.subplots_adjust(top=0.88, bottom=0.08, left=0.08, right=0.97, hspace=0.5, wspace=0.35)
-fig.savefig(r'C:\Users\emili\PycharmProjects\TesisUY\Gráficos\11_distribucion_CO2_acumulado.png', dpi=300)
+fig.savefig(r'C:\Users\emili\PycharmProjects\TesisUY\Gráficos\Distribucion CO2 acumulado por ventas.png', dpi=300)
 #plt.show()
