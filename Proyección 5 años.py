@@ -7,6 +7,9 @@ import re
 archivo_resultados = "Salida Escenarios.xlsx"
 df_resumen = pd.read_excel(archivo_resultados, sheet_name="Resumen Escenarios")
 
+
+
+
 ventas_no_bev_base = df_resumen["Ventas Año Base (Sin BEV)"].iloc[0]
 ventas_bev_base = df_resumen["Ventas BEV Año Base"].iloc[0]
 consumo_sin_bev_año_base_unidad = df_resumen["Consumo Año Base (sin BEV) (tep)/Unidad"].iloc[0]
@@ -180,7 +183,7 @@ plt.legend()
 ax = plt.gca()
 ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
 plt.tight_layout()
-plt.savefig('1_grafico_participacion_BEV.png', dpi=300)
+plt.savefig(r"C:\Users\emili\PycharmProjects\TesisUY\Gráficos\Proyección 5 años\grafico participacion BEV.png", dpi=300)
 ##plt.show()
 
 # -------------------------------------------------------------------------------------------------------------------
@@ -189,7 +192,7 @@ plt.savefig('1_grafico_participacion_BEV.png', dpi=300)
 # -------------------------------------------------------------------------------------------------------------------
 
 # Filtrar por elasticidad deseada
-elasticidad_objetivo = -1.6
+elasticidad_objetivo = -1.87
 df_grafico2 = df_proyecciones[df_proyecciones["Elasticidad"] == elasticidad_objetivo]
 
 # Filtrar escenarios específicos: se usa .str.contains para buscar cualquiera de los patrones indicados
@@ -237,7 +240,7 @@ for i, escenario in enumerate(escenarios_unicos):
 
 plt.suptitle('Diferencia IMESI vs Año Base 2023')
 plt.tight_layout()
-plt.savefig('2_Diferencia IMESI vs Año Base 2023.png', dpi=300)
+plt.savefig(r"C:\Users\emili\PycharmProjects\TesisUY\Gráficos\Proyección 5 años\Diferencia IMESI vs Año Base 2023.png", dpi=300)
 ##plt.show()
 
 # -------------------------------------------------------------------------------------------------------------------
@@ -246,7 +249,7 @@ plt.savefig('2_Diferencia IMESI vs Año Base 2023.png', dpi=300)
 
 # Filtrar elasticidad específica. Al filtrar por elasticidad deja afuera el escalonado ya que ese escenario no esta
 # separado por elasticidad.
-elasticidad_objetivo = -1.6
+elasticidad_objetivo = -1.87
 df_filtrado = df_proyecciones[df_proyecciones["Elasticidad"] == elasticidad_objetivo]
 
 # Filtrar años 2024-2028 y sumar acumuladamente
@@ -298,7 +301,7 @@ plt.xticks(posiciones + ancho_barra, escenarios_fiscales, rotation=45, ha='right
 plt.grid(axis='y', linestyle='--', alpha=0.7)
 plt.legend(title="Tipo de penetración", loc='upper left', bbox_to_anchor=(1, 1))
 plt.tight_layout(rect=[0, 0, 1, 1])
-plt.savefig("3_comparacion_acumulada_recaudacion_IMESI.png", dpi=300)
+plt.savefig(r"C:\Users\emili\PycharmProjects\TesisUY\Gráficos\Proyección 5 años\comparacion acumulada recaudacion IMESI.png", dpi=300)
 #plt.show()
 
 # -------------------------------------------------------------------------------------------------------------------
@@ -306,7 +309,7 @@ plt.savefig("3_comparacion_acumulada_recaudacion_IMESI.png", dpi=300)
 # -------------------------------------------------------------------------------------------------------------------
 
 # Filtrar elasticidad específica
-elasticidad_objetivo = -1.6
+elasticidad_objetivo = -1.87
 df_filtrado = df_proyecciones[df_proyecciones["Elasticidad"] == elasticidad_objetivo]
 
 # Extraer datos base exactos desde archivo original
@@ -371,7 +374,7 @@ generar_grafico(
     columna="Consumo Energético Sin BEV (tep)",
     valor_base=consumo_base_sin_bev_5anios,
     titulo="Comparación acumulada del Consumo Energético Sin BEV (2024-2028)",
-    nombre_archivo="4_comparacion_consumo_sin_BEV.png"
+    nombre_archivo=r"C:\Users\emili\PycharmProjects\TesisUY\Gráficos\Proyección 5 años\comparacion consumo sin BEV.png"
 )
 
 # 2 - Consumo Energético BEV (tep)
@@ -379,7 +382,7 @@ generar_grafico(
     columna="Consumo Energético BEV (tep)",
     valor_base=consumo_base_bev_5anios,
     titulo="Comparación acumulada del Consumo Energético BEV (2024-2028)",
-    nombre_archivo="5_comparacion_consumo_BEV.png"
+    nombre_archivo=r"C:\Users\emili\PycharmProjects\TesisUY\Gráficos\Proyección 5 años\comparacion consumo BEV.png"
 )
 
 # 3 - Consumo Energético Total (tep)
@@ -387,15 +390,15 @@ generar_grafico(
     columna="Consumo Energético Total (tep)",
     valor_base=consumo_base_total_5anios,
     titulo="Comparación acumulada del Consumo Energético Total (2024-2028)",
-    nombre_archivo="6_comparacion_consumo_total.png"
+    nombre_archivo=r"C:\Users\emili\PycharmProjects\TesisUY\Gráficos\Proyección 5 años\comparacion consumo total.png"
 )
 
 # --------------------------------------------------
 # Gráfico 7: Evolución de las emisiones CO2 totales (ton) por tipo de penetración
 # Filtrado por elasticidad ingresada
 # --------------------------------------------------
-# Filtrar el DataFrame por la elasticidad deseada (-1.6 en este ejemplo)
-df_grafico7 = df_proyecciones[df_proyecciones["Elasticidad"] == -1.6]
+# Filtrar el DataFrame por la elasticidad deseada (-1.87 en este ejemplo)
+df_grafico7 = df_proyecciones[df_proyecciones["Elasticidad"] == -1.87]
 
 # Escenarios que se desean filtrar (asegúrate de que estas subcadenas estén presentes en los nombres)
 escenarios_deseados = ["Lineal Escenario 4", "Lineal Escenario 5", "Lineal Escenario 6"]
@@ -428,7 +431,7 @@ plt.tight_layout()
 # Gráfico 8: Comparativo acumulado de emisiones CO2 totales (2024-2028)
 # Filtrado por elasticidad ingresada
 # --------------------------------------------------
-df_emisiones_acumulado = df_proyecciones[(df_proyecciones["Elasticidad"] == -1.6) &
+df_emisiones_acumulado = df_proyecciones[(df_proyecciones["Elasticidad"] == -1.87) &
                                          (df_proyecciones["Año"].between(2024, 2028))].groupby(
     ["Escenario", "Tipo de penetración"]
 )["Emisiones CO2 Total (ton)"].sum().reset_index()
@@ -457,12 +460,12 @@ plt.bar(posiciones + 3 * ancho_barra, datos_base, ancho_barra, label="Emisiones 
 
 plt.xlabel("Escenario", fontsize=12)
 plt.ylabel("Emisiones CO2 acumuladas (miles de ton)", fontsize=12)
-plt.title(f"Comparación acumulada de emisiones CO2 totales (2024-2028)\nElasticidad = {-1.6}", fontsize=14)
+plt.title(f"Comparación acumulada de emisiones CO2 totales (2024-2028)\nElasticidad = {-1.87}", fontsize=14)
 plt.xticks(posiciones + ancho_barra, escenarios_fiscales_emisiones, rotation=45, ha='right')
 plt.grid(axis='y', linestyle='--', alpha=0.7)
 plt.legend(title="Tipo de penetración", loc='upper left', bbox_to_anchor=(1, 1))
 plt.tight_layout(rect=[0, 0, 1, 1])
-plt.savefig("8_comparacion_acumulada_emisiones_CO2_filtrado.png", dpi=300)
+plt.savefig(r"C:\Users\emili\PycharmProjects\TesisUY\Gráficos\Proyección 5 años\comparacion acumulada emisiones CO2 filtrado.png", dpi=300)
 #plt.show()
 
 # --------------------------------------------------
@@ -506,25 +509,24 @@ generar_grafico_GWh(
     columna="Consumo Energético Sin BEV (tep)",
     valor_base=consumo_base_sin_bev_5anios,
     titulo="Comparación acumulada del Consumo Energético Sin BEV (2024-2028) en GWh",
-    nombre_archivo="4_comparacion_consumo_sin_BEV_GWh.png"
+    nombre_archivo=r"C:\Users\emili\PycharmProjects\TesisUY\Gráficos\Proyección 5 años\comparacion consumo sin BEV GWh.png"
 )
+
 
 # --- Gráfico 2: Consumo Energético BEV en GWh ---
 generar_grafico_GWh(
     columna="Consumo Energético BEV (tep)",
     valor_base=consumo_base_bev_5anios,
     titulo="Comparación acumulada del Consumo Energético BEV (2024-2028) en GWh",
-    nombre_archivo="5_comparacion_consumo_BEV_GWh.png"
+    nombre_archivo=r"C:\Users\emili\PycharmProjects\TesisUY\Gráficos\Proyección 5 años\comparacion consumo BEV GWh.png"
 )
-
 # --- Gráfico 3: Consumo Energético Total en GWh ---
 generar_grafico_GWh(
     columna="Consumo Energético Total (tep)",
     valor_base=consumo_base_total_5anios,
     titulo="Comparación acumulada del Consumo Energético Total (2024-2028) en GWh",
-    nombre_archivo="6_comparacion_consumo_total_GWh.png"
+    nombre_archivo=r"C:\Users\emili\PycharmProjects\TesisUY\Gráficos\Proyección 5 años\comparacion consumo total GWh.png"
 )
-
 
 # --------------------------------------------------
 # Pie Chart: Distribución de emisiones BEV vs Sin BEV
@@ -534,7 +536,7 @@ generar_grafico_GWh(
 # --------------------------------------------------
 
 # Filtrar el DataFrame para elasticidad deseada y el período 2024-2028
-df_pie = df_proyecciones[(df_proyecciones["Elasticidad"] == -1.6) &
+df_pie = df_proyecciones[(df_proyecciones["Elasticidad"] == -1.87) &
                          (df_proyecciones["Año"].between(2024, 2028))].copy()
 
 # Extraer el número del escenario (asumiendo que aparece un dígito en el nombre)
@@ -562,7 +564,7 @@ for ax, esc in zip(axes, scenarios_for_pie):
     labels = ["BEV", "Sin BEV"]
     ax.pie(data, labels=labels, autopct='%1.1f%%', startangle=90)
     ax.set_title(f"Escenario {esc}")
-plt.suptitle(f"Distribución de emisiones CO2 (2024-2028)\nElasticidad = {-1.6}")
+plt.suptitle(f"Distribución de emisiones CO2 (2024-2028)\nElasticidad = {-1.87}")
 plt.tight_layout()
-plt.savefig("9_pie_emisiones_scenarios_filtrado.png", dpi=300)
+plt.savefig(r"C:\Users\emili\PycharmProjects\TesisUY\Gráficos\Proyección 5 años\pie emisiones scenarios filtrado.png", dpi=300)
 #plt.show()

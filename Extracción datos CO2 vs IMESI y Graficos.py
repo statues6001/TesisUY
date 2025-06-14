@@ -155,7 +155,7 @@ axes = axes.flatten()
 for i, imesi in enumerate(unique_imesi):
     ax = axes[i]
     subset = df_clean[df_clean['IMESI_x100'] == imesi]
-    ax.hist(subset['CO2 NEDC (g/km)'], bins=30, weights=subset['Procesados'],
+    ax.hist(subset['CO2 NEDC (g/km)'], bins=50, weights=subset['Procesados'],
             color=colors[i % len(colors)], edgecolor='black')
     # Agregar subtítulo especial para IMESI = 34.5
     if imesi == 34.5:
@@ -164,50 +164,51 @@ for i, imesi in enumerate(unique_imesi):
     else:
         title = f"{imesi}%\n - {map_imesi.get(imesi, '')}"
     ax.set_title(title, fontsize=9)
-    ax.set_xlabel("", fontsize=9)
-    ax.set_ylabel("", fontsize=9)
+    ax.set_xlabel("CO₂ NEDC (g/km)", fontsize=9)
+    ax.set_ylabel("Ventas", fontsize=9)
 
 for j in range(i+1, len(axes)):
     fig_hist.delaxes(axes[j])
 
 # Cambiar "fig" por "fig_hist" en las siguientes líneas:
-fig_hist.suptitle('Histograma de CO2, ponderado por ventas', fontsize=14)
-fig_hist.text(0.5, 0.04, 'CO₂ NEDC (g/km)', ha='center', fontsize=12)
-fig_hist.text(0.04, 0.5, 'Ventas', va='center', rotation='vertical', fontsize=12)
+fig_hist.suptitle('Histograma de emisiones de CO₂ según volumen de ventas', fontsize=14)
+#fig_hist.text(0.5, 0.04, 'CO₂ NEDC (g/km)', ha='center', fontsize=12)
+#fig_hist.text(0.04, 0.5, 'Ventas', va='center', rotation='vertical', fontsize=12)
 
 plt.subplots_adjust(top=0.88, bottom=0.08, left=0.08, right=0.97, hspace=0.5, wspace=0.35)
-fig_hist.savefig(r'C:\Users\emili\PycharmProjects\TesisUY\Gráficos\Histograma de CO2, ponderado por ventas.png', dpi=300)
+fig_hist.savefig(r'C:\Users\emili\PycharmProjects\TesisUY\Gráficos\Histograma de CO2, según volumen de ventas.png', dpi=300)
 #plt.show()
 
 #----------------------------------------------------------------------------------------------------------------
+# 5. Distribución de CO2 según acumulado de ventas por franja de IMESI
+# Los gráficos se separan en dos figuras para que se visualicen mejor al agregarlas a un texto
+#----------------------------------------------------------------------------------------------------------------
+
 # Colores para cada franja de IMESI
 colors_dict = {val: colors[i % len(colors)] for i, val in enumerate(unique_imesi)}
 
-# Cantidad de subplots
-n = len(unique_imesi)
+# Número total de franjas
+n_franjas = len(unique_imesi)
 cols = 3
-rows = math.ceil(n / cols)
+rows = math.ceil(n_franjas / cols)
 
 fig, axes = plt.subplots(rows, cols, figsize=(cols * 6, rows * 4))
 axes = axes.flatten()
 
 for i, imesi in enumerate(unique_imesi):
     ax = axes[i]
-
-    # Filtrar datos de la franja
     subset = df_clean[df_clean['IMESI_x100'] == imesi][['CO2 NEDC (g/km)', 'Procesados']].dropna()
 
     if subset.empty:
         continue
 
-    # Expandir filas según ventas (una fila por cada vehículo vendido)
+    # Expandir filas según ventas
     expanded = subset.loc[subset.index.repeat(subset['Procesados'].astype(int))].copy()
     expanded.sort_values('CO2 NEDC (g/km)', inplace=True)
 
-    # Calcular % acumulado de ventas
+    # % acumulado
     expanded['Acumulado'] = np.arange(1, len(expanded) + 1) / len(expanded) * 100
 
-    # Graficar
     ax.plot(expanded['Acumulado'], expanded['CO2 NEDC (g/km)'],
             color=colors_dict[imesi], lw=2)
 
@@ -216,21 +217,21 @@ for i, imesi in enumerate(unique_imesi):
                   "Incluye PHEV y HEV (2.500 c.c. - ∞), MHEV (2.000 c.c. - ∞)")
     else:
         titulo = f"{imesi}%\n{map_imesi.get(imesi, '')}"
+
     ax.set_title(titulo, fontsize=9)
-    ax.set_xlabel('', fontsize=9)
-    ax.set_ylabel('', fontsize=9)
+    ax.set_xlabel('% acumulado de ventas', fontsize=9)
+    ax.set_ylabel('CO₂ NEDC (g/km)', fontsize=9)
     ax.grid(True)
 
-# Eliminar subgráficos vacíos
+# Eliminar ejes vacíos
 for j in range(i + 1, len(axes)):
     fig.delaxes(axes[j])
 
 fig.suptitle('Distribución de CO₂ según acumulado de ventas por franja IMESI', fontsize=14)
-
-# Etiquetas globales de ejes
-fig.text(0.5, 0.04, '% acumulado de ventas', ha='center', fontsize=12)
-fig.text(0.04, 0.5, 'CO₂ NEDC (g/km)', va='center', rotation='vertical', fontsize=12)
-
+#fig.text(0.5, 0.04, '% acumulado de ventas', ha='center', fontsize=12)
+#fig.text(0.04, 0.5, 'CO₂ NEDC (g/km)', va='center', rotation='vertical', fontsize=12)
 plt.subplots_adjust(top=0.88, bottom=0.08, left=0.08, right=0.97, hspace=0.5, wspace=0.35)
-fig.savefig(r'C:\Users\emili\PycharmProjects\TesisUY\Gráficos\Distribucion CO2 acumulado por ventas.png', dpi=300)
-#plt.show()
+fig.savefig(r'C:\Users\emili\PycharmProjects\TesisUY\Gráficos\Distribucion CO2 acumulado.png', dpi=300)
+plt.close(fig)
+
+
