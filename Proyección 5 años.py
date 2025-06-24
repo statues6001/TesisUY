@@ -7,7 +7,22 @@ import re
 archivo_resultados = "Salida Escenarios.xlsx"
 df_resumen = pd.read_excel(archivo_resultados, sheet_name="Resumen Escenarios")
 
-
+# -------------------------------------
+# Renombrar escenarios para mejor visualización
+# -------------------------------------
+mapa_escenarios = {
+    "Escalonado Escenario 1":       "Escenario 1 - Escalonado",
+    "Lineal Escenario 1 (E=-1.87)": "Escenario 1 - Lineal",
+    "Lineal Escenario 2 (E=-1.87)": "Escenario 2",
+    "Lineal Escenario 3 (E=-1.87)": "Escenario 3",
+    "Lineal Escenario 4 (E=-1.87)": "Escenario 4",
+    "Lineal Escenario 5 (E=-1.87)": "Escenario 5",
+    "Lineal Escenario 6 (E=-1.87)": "Escenario 6",
+    "Lineal Escenario 7 (E=-1.87)": "Escenario 7",
+    "Lineal Escenario 8 (E=-1.87)": "Escenario 8",
+    "Lineal Escenario 9 (E=-1.87)": "Escenario 9",
+    "Lineal Escenario 10 (E=-1.87)": "Escenario 10"
+}
 
 
 ventas_no_bev_base = df_resumen["Ventas Año Base (Sin BEV)"].iloc[0]
@@ -123,9 +138,9 @@ for idx, fila in df_resumen.iterrows():
 # Generar DataFrame y Excel final
 df_proyecciones = pd.DataFrame(resultados_proyeccion)
 
-# Extraer el valor de elasticidad de la columna "Escenario"
-# Se asume que el formato es "Lineal Escenario x (E=y)"
 df_proyecciones["Elasticidad"] = df_proyecciones["Escenario"].str.extract(r"\(E=([-\d\.]+)\)").astype(float)
+# Extraer el valor de elasticidad de la columna "Escenario"
+
 
 # -------------------------- Guardado del Excel con dos pestañas --------------------------
 # Definir columnas para cada pestaña
@@ -175,9 +190,9 @@ for escenario in escenarios:
     datos = df_plot1[df_plot1["Tipo de penetración"] == escenario]
     plt.plot(datos["Año"], datos["% Participación BEV"], marker='o', label=escenario)
 
-plt.title('Evolución de la participación BEV (%) por escenario')
+plt.title('Evolución de la participación BEV (%) en las ventas de 0 km')
 plt.xlabel('Año')
-plt.ylabel('% Participación BEV')
+plt.ylabel('% Participación BEV en ventas 0 km')
 plt.grid(True, linestyle='--', alpha=0.6)
 plt.legend()
 ax = plt.gca()
@@ -195,13 +210,17 @@ plt.savefig(r"C:\Users\emili\PycharmProjects\TesisUY\Gráficos\Proyección 5 añ
 elasticidad_objetivo = -1.87
 df_grafico2 = df_proyecciones[df_proyecciones["Elasticidad"] == elasticidad_objetivo]
 
+# Se crea este dataframe solo para cambiar la visualización en la tesis
+df_plot2 = df_grafico2.copy()
+df_plot2["EscenarioGraf"] = df_plot2["Escenario"].replace(mapa_escenarios)
+
 # Filtrar escenarios específicos: se usa .str.contains para buscar cualquiera de los patrones indicados
-escenarios_deseados = ["Lineal Escenario 6", "Lineal Escenario 4", "Lineal Escenario 3", "Lineal Escenario 7"]
+escenarios_deseados = ["Escenario 4", "Escenario 8", "Escenario 9", "Escenario 10"]
 pattern = '|'.join(escenarios_deseados)
-df_filtrado = df_grafico2[df_grafico2["Escenario"].str.contains(pattern)]
+df_filtrado = df_plot2[df_plot2["EscenarioGraf"].str.contains(pattern)]
 
 # Extraer escenarios únicos después de filtrar
-escenarios_unicos = df_filtrado["Escenario"].unique()
+escenarios_unicos = df_filtrado["EscenarioGraf"].unique()
 n_escenarios = len(escenarios_unicos)
 
 fig, axs = plt.subplots(nrows=1, ncols=n_escenarios, figsize=(5 * n_escenarios, 5), sharey=True)
@@ -213,7 +232,7 @@ if n_escenarios == 1:
 for i, escenario in enumerate(escenarios_unicos):
     ax = axs[i]
     # Filtrar data para el escenario actual
-    df_escenario = df_filtrado[df_filtrado["Escenario"] == escenario]
+    df_escenario = df_filtrado[df_filtrado["EscenarioGraf"] == escenario]
     # Obtener los años ordenados
     anios = sorted(df_escenario["Año"].unique())
     x = np.arange(len(anios))
@@ -231,14 +250,14 @@ for i, escenario in enumerate(escenarios_unicos):
     ax.set_title(escenario)
     ax.set_xlabel('Año')
     if i == 0:
-        ax.set_ylabel('Diferencia IMESI vs Año Base 2023 (millones USD)')
+        ax.set_ylabel('Variación en la recaudación de IMESI (millones USD/año)')
     ax.set_xticks(x + ancho_barra * (n_tipos - 1) / 2)
     ax.set_xticklabels(anios)
     ax.axhline(0, color='black', linewidth=0.8)
     ax.grid(True, linestyle='--', alpha=0.6)
     ax.legend()
 
-plt.suptitle('Diferencia IMESI vs Año Base 2023')
+plt.suptitle('Variación en la recaudación de IMESI con respecto al año base (2023) \n Escenarios filtrados por elasticidad = -1.87')
 plt.tight_layout()
 plt.savefig(r"C:\Users\emili\PycharmProjects\TesisUY\Gráficos\Proyección 5 años\Diferencia IMESI vs Año Base 2023.png", dpi=300)
 ##plt.show()
@@ -257,6 +276,10 @@ df_acumulado = df_filtrado[df_filtrado["Año"].between(2024, 2028)].groupby(
     ["Escenario", "Tipo de penetración"]
 )["Recaudación IMESI Total (USD)"].sum().reset_index()
 
+# Se crea este dataframe solo para cambiar la visualización en la tesis
+df_plot3 = df_acumulado.copy()
+df_plot3["EscenarioGraf"] = df_plot3["Escenario"].replace(mapa_escenarios)
+
 # Añadir columna del valor base constante (5 años)
 valor_base_constante = df_resumen["Recaudación IMESI Año Base (Sin BEV) (USD)"].iloc[0] + df_resumen["Recaudación IMESI Año Base BEV (USD)"].iloc[0]
 valor_base_5anios = valor_base_constante * 5
@@ -266,7 +289,7 @@ def obtener_numero(escenario):
     match = re.search(r'\d+', escenario)
     return int(match.group()) if match else 0
 
-escenarios_fiscales = sorted(df_acumulado["Escenario"].unique(), key=obtener_numero)
+escenarios_fiscales = sorted(df_plot3["EscenarioGraf"].unique(), key=obtener_numero)
 
 # Tipos de penetración claramente definidos
 tipos_penetracion = ["Pesimista", "Tendencial", "Acelerado"]
@@ -281,24 +304,25 @@ plt.figure(figsize=(14, 7))
 for i, tipo in enumerate(tipos_penetracion):
     datos_tipo = []
     for esc in escenarios_fiscales:
-        valor = df_acumulado[
-            (df_acumulado["Escenario"] == esc) &
-            (df_acumulado["Tipo de penetración"] == tipo)
-        ]["Recaudación IMESI Total (USD)"].values[0] / 1e6  # millones USD
+        valor = df_plot3[
+            (df_plot3["EscenarioGraf"] == esc) &
+            (df_plot3["Tipo de penetración"] == tipo)
+            ]["Recaudación IMESI Total (USD)"].values[0] / 1e6
         datos_tipo.append(valor)
 
     plt.bar(posiciones + i * ancho_barra, datos_tipo, ancho_barra, label=tipo)
 
 # Barra adicional para valor base
 datos_base = [valor_base_5anios / 1e6] * len(escenarios_fiscales)
-plt.bar(posiciones + 3 * ancho_barra, datos_base, ancho_barra, label="Recaudación Base 2023 (5 años)", color='gray', alpha=0.6)
+plt.bar(posiciones + 3 * ancho_barra, datos_base, ancho_barra, label="Año base (2023) x 5", color='gray', alpha=0.6)
 
 # Configuración visual
 plt.xlabel("Escenario", fontsize=12)
-plt.ylabel("Recaudación Acumulada IMESI 2024-2028 (millones USD)", fontsize=12)
-plt.title(f"Comparación acumulada de recaudación IMESI (2024-2028)\nElasticidad = {elasticidad_objetivo}", fontsize=14)
+plt.ylabel("Recaudación acumulada (millones USD)", fontsize=12)
+plt.title(f"Recaudación acumulada por concepto de IMESI para el período 2024-2028 \n Escenarios filtrados por elasticidad = {elasticidad_objetivo}", fontsize=14)
 plt.xticks(posiciones + ancho_barra, escenarios_fiscales, rotation=45, ha='right')
 plt.grid(axis='y', linestyle='--', alpha=0.7)
+plt.ylim(600, None)
 plt.legend(title="Tipo de penetración", loc='upper left', bbox_to_anchor=(1, 1))
 plt.tight_layout(rect=[0, 0, 1, 1])
 plt.savefig(r"C:\Users\emili\PycharmProjects\TesisUY\Gráficos\Proyección 5 años\comparacion acumulada recaudacion IMESI.png", dpi=300)
@@ -334,8 +358,12 @@ df_acumulado = df_filtrado[df_filtrado["Año"].between(2024, 2028)].groupby(
     "Consumo Energético Total (tep)": "sum"
 }).reset_index()
 
+# Se crea este dataframe solo para cambiar la visualización en la tesis
+df_plot456 = df_acumulado.copy()
+df_plot456["EscenarioGraf"] = df_plot456["Escenario"].replace(mapa_escenarios)
+
 # Escenarios fiscales ordenados
-escenarios_fiscales = sorted(df_acumulado["Escenario"].unique(), key=obtener_numero)
+escenarios_fiscales = sorted(df_plot456["EscenarioGraf"].unique(), key=obtener_numero)
 tipos_penetracion = ["Pesimista", "Tendencial", "Acelerado"]
 ancho_barra = 0.2
 posiciones = np.arange(len(escenarios_fiscales))
@@ -346,22 +374,22 @@ def generar_grafico(columna, valor_base, titulo, nombre_archivo):
 
     for i, tipo in enumerate(tipos_penetracion):
         datos_tipo = [
-            df_acumulado[
-                (df_acumulado["Escenario"] == esc) &
-                (df_acumulado["Tipo de penetración"] == tipo)
-            ][columna].values[0] / 1e3  # miles de tep
+            df_plot456[
+                 (df_plot456["EscenarioGraf"] == esc) &
+                 (df_plot456["Tipo de penetración"] == tipo)
+                ][columna].values[0] / 1e3
             for esc in escenarios_fiscales
         ]
         plt.bar(posiciones + i * ancho_barra, datos_tipo, ancho_barra, label=tipo)
 
     # Barra adicional base
     datos_base = [valor_base / 1e3] * len(escenarios_fiscales)
-    plt.bar(posiciones + 3 * ancho_barra, datos_base, ancho_barra, label="Consumo Base 2023 (5 años)", color='gray', alpha=0.6)
+    plt.bar(posiciones + 3 * ancho_barra, datos_base, ancho_barra, label="Año base (2023) x 5", color='gray', alpha=0.6)
 
     # Detalles visuales
     plt.xlabel("Escenario", fontsize=12)
-    plt.ylabel("Consumo acumulado (miles de tep)", fontsize=12)
-    plt.title(f"{titulo}\nElasticidad = {elasticidad_objetivo}", fontsize=14)
+    plt.ylabel("Consumo acumulado (ktep)", fontsize=12)
+    plt.title(f"{titulo}\n Escenarios filtrados por elasticidad = {elasticidad_objetivo}", fontsize=14)
     plt.xticks(posiciones + 1.5 * ancho_barra, escenarios_fiscales, rotation=45, ha='right')
     plt.grid(axis='y', linestyle='--', alpha=0.7)
     plt.legend(title="Tipo de penetración", loc='upper left', bbox_to_anchor=(1, 1))
@@ -369,11 +397,11 @@ def generar_grafico(columna, valor_base, titulo, nombre_archivo):
     plt.savefig(nombre_archivo, dpi=300)
     #plt.show()
 
-# 1 - Consumo Energético Sin BEV (tep)
+# 1 - Consumo Energético Sin BEV (ktep)
 generar_grafico(
     columna="Consumo Energético Sin BEV (tep)",
     valor_base=consumo_base_sin_bev_5anios,
-    titulo="Comparación acumulada del Consumo Energético Sin BEV (2024-2028)",
+    titulo="Consumo energético acumulado sin considerar BEV para el período 2024-2028",
     nombre_archivo=r"C:\Users\emili\PycharmProjects\TesisUY\Gráficos\Proyección 5 años\comparacion consumo sin BEV.png"
 )
 
@@ -381,7 +409,7 @@ generar_grafico(
 generar_grafico(
     columna="Consumo Energético BEV (tep)",
     valor_base=consumo_base_bev_5anios,
-    titulo="Comparación acumulada del Consumo Energético BEV (2024-2028)",
+    titulo="Consumo energético acumulado solo considerando BEV para el período 2024-2028",
     nombre_archivo=r"C:\Users\emili\PycharmProjects\TesisUY\Gráficos\Proyección 5 años\comparacion consumo BEV.png"
 )
 
@@ -389,7 +417,7 @@ generar_grafico(
 generar_grafico(
     columna="Consumo Energético Total (tep)",
     valor_base=consumo_base_total_5anios,
-    titulo="Comparación acumulada del Consumo Energético Total (2024-2028)",
+    titulo="Consumo energético acumulado total para el período 2024-2028",
     nombre_archivo=r"C:\Users\emili\PycharmProjects\TesisUY\Gráficos\Proyección 5 años\comparacion consumo total.png"
 )
 
@@ -401,7 +429,7 @@ generar_grafico(
 df_grafico7 = df_proyecciones[df_proyecciones["Elasticidad"] == -1.87]
 
 # Escenarios que se desean filtrar (asegúrate de que estas subcadenas estén presentes en los nombres)
-escenarios_deseados = ["Lineal Escenario 4", "Lineal Escenario 5", "Lineal Escenario 6"]
+escenarios_deseados = ["Escenario 4", "Escenario 5", "Escenario 6"]
 
 # Crear subplots: 1 fila, 3 columnas
 fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(18, 6), sharey=True)
@@ -436,10 +464,14 @@ df_emisiones_acumulado = df_proyecciones[(df_proyecciones["Elasticidad"] == -1.8
     ["Escenario", "Tipo de penetración"]
 )["Emisiones CO2 Total (ton)"].sum().reset_index()
 
+# Se crea este dataframe solo para cambiar la visualización en la tesis
+df_plot8 = df_emisiones_acumulado.copy()
+df_plot8["EscenarioGraf"] = df_plot8["Escenario"].replace(mapa_escenarios)
+
 base_emisiones_total = ((ventas_bev_base * df_resumen["Emisiones BEV CO2 Año Base (ton)/Unidad"].iloc[0]) +
                         (ventas_no_bev_base * df_resumen["Emisiones Sin BEV CO2 Año Base (ton)/Unidad"].iloc[0])) * 5
 
-escenarios_fiscales_emisiones = sorted(df_emisiones_acumulado["Escenario"].unique(), key=obtener_numero)
+escenarios_fiscales_emisiones = sorted(df_plot8["EscenarioGraf"].unique(), key=obtener_numero)
 tipos_penetracion_emisiones = ["Pesimista", "Tendencial", "Acelerado"]
 ancho_barra = 0.2
 posiciones = np.arange(len(escenarios_fiscales_emisiones))
@@ -448,21 +480,22 @@ plt.figure(figsize=(14,7))
 for i, tipo in enumerate(tipos_penetracion_emisiones):
     datos_tipo = []
     for esc in escenarios_fiscales_emisiones:
-        valor = df_emisiones_acumulado[
-            (df_emisiones_acumulado["Escenario"] == esc) &
-            (df_emisiones_acumulado["Tipo de penetración"] == tipo)
+        valor = df_plot8[
+            (df_plot8["EscenarioGraf"] == esc) &
+            (df_plot8["Tipo de penetración"] == tipo)
         ]["Emisiones CO2 Total (ton)"].values[0]
         datos_tipo.append(valor / 1e3)  # Convertir a miles de ton
     plt.bar(posiciones + i * ancho_barra, datos_tipo, ancho_barra, label=tipo)
 
 datos_base = [base_emisiones_total / 1e3] * len(escenarios_fiscales_emisiones)
-plt.bar(posiciones + 3 * ancho_barra, datos_base, ancho_barra, label="Emisiones Base 2023 (5 años)", color='gray', alpha=0.6)
+plt.bar(posiciones + 3 * ancho_barra, datos_base, ancho_barra, label="Año base (2023) x 5", color='gray', alpha=0.6)
 
 plt.xlabel("Escenario", fontsize=12)
-plt.ylabel("Emisiones CO2 acumuladas (miles de ton)", fontsize=12)
-plt.title(f"Comparación acumulada de emisiones CO2 totales (2024-2028)\nElasticidad = {-1.87}", fontsize=14)
+plt.ylabel("Emisiones de CO₂ acumuladas (miles de ton)", fontsize=12)
+plt.title(f"Emisiones de CO₂ acumuladas para el período 2024-2028 \n Escenarios filtrados por elasticidad = {-1.87}", fontsize=14)
 plt.xticks(posiciones + ancho_barra, escenarios_fiscales_emisiones, rotation=45, ha='right')
 plt.grid(axis='y', linestyle='--', alpha=0.7)
+plt.ylim(500, None)
 plt.legend(title="Tipo de penetración", loc='upper left', bbox_to_anchor=(1, 1))
 plt.tight_layout(rect=[0, 0, 1, 1])
 plt.savefig(r"C:\Users\emili\PycharmProjects\TesisUY\Gráficos\Proyección 5 años\comparacion acumulada emisiones CO2 filtrado.png", dpi=300)
@@ -475,13 +508,19 @@ plt.savefig(r"C:\Users\emili\PycharmProjects\TesisUY\Gráficos\Proyección 5 añ
 # Factor de conversión: 1 tep = 0.01163 GWh
 factor_tep_to_GWh = 0.01163
 
+# Se crea este dataframe solo para cambiar la visualización en la tesis
+df_plot_GWh = df_acumulado.copy()
+df_plot_GWh["EscenarioGraf"] = df_plot_GWh["Escenario"].replace(mapa_escenarios)
+
+# Y redefine escenarios_fiscales sobre esa copia renombrada:
+escenarios_fiscales = sorted(df_plot_GWh["EscenarioGraf"].unique(), key=obtener_numero)
 def generar_grafico_GWh(columna, valor_base, titulo, nombre_archivo):
     plt.figure(figsize=(14, 7))
     for i, tipo in enumerate(tipos_penetracion):
         datos_tipo = [
-            df_acumulado[
-                (df_acumulado["Escenario"] == esc) &
-                (df_acumulado["Tipo de penetración"] == tipo)
+            df_plot_GWh[
+                (df_plot_GWh["EscenarioGraf"] == esc) &
+                (df_plot_GWh["Tipo de penetración"] == tipo)
                 ][columna].values[0] * factor_tep_to_GWh
             for esc in escenarios_fiscales
         ]
@@ -489,13 +528,13 @@ def generar_grafico_GWh(columna, valor_base, titulo, nombre_archivo):
 
     # Barra adicional para el valor base (consumo del año base multiplicado por 5 años)
     datos_base = [valor_base * factor_tep_to_GWh] * len(escenarios_fiscales)
-    plt.bar(posiciones + 3 * ancho_barra, datos_base, ancho_barra, label="Consumo Base 2023 (5 años)", color='gray',
+    plt.bar(posiciones + 3 * ancho_barra, datos_base, ancho_barra, label="Año base (2023) x 5", color='gray',
             alpha=0.6)
 
     # Configuración visual
     plt.xlabel("Escenario", fontsize=12)
     plt.ylabel("Consumo acumulado (GWh)", fontsize=12)
-    plt.title(f"{titulo}\nElasticidad = {elasticidad_objetivo}", fontsize=14)
+    plt.title(f"{titulo}\n Escenarios filtrados por elasticidad = {elasticidad_objetivo}", fontsize=14)
     plt.xticks(posiciones + 1.5 * ancho_barra, escenarios_fiscales, rotation=45, ha='right')
     plt.grid(axis='y', linestyle='--', alpha=0.7)
     plt.legend(title="Tipo de penetración", loc='upper left', bbox_to_anchor=(1, 1))
@@ -508,7 +547,7 @@ def generar_grafico_GWh(columna, valor_base, titulo, nombre_archivo):
 generar_grafico_GWh(
     columna="Consumo Energético Sin BEV (tep)",
     valor_base=consumo_base_sin_bev_5anios,
-    titulo="Comparación acumulada del Consumo Energético Sin BEV (2024-2028) en GWh",
+    titulo="Consumo energético acumulado sin considerar BEV para el período 2024-2028 en GWh",
     nombre_archivo=r"C:\Users\emili\PycharmProjects\TesisUY\Gráficos\Proyección 5 años\comparacion consumo sin BEV GWh.png"
 )
 
@@ -517,54 +556,13 @@ generar_grafico_GWh(
 generar_grafico_GWh(
     columna="Consumo Energético BEV (tep)",
     valor_base=consumo_base_bev_5anios,
-    titulo="Comparación acumulada del Consumo Energético BEV (2024-2028) en GWh",
+    titulo="Consumo energético acumulado solo considerando BEV para el período 2024-2028 en GWh",
     nombre_archivo=r"C:\Users\emili\PycharmProjects\TesisUY\Gráficos\Proyección 5 años\comparacion consumo BEV GWh.png"
 )
 # --- Gráfico 3: Consumo Energético Total en GWh ---
 generar_grafico_GWh(
     columna="Consumo Energético Total (tep)",
     valor_base=consumo_base_total_5anios,
-    titulo="Comparación acumulada del Consumo Energético Total (2024-2028) en GWh",
+    titulo="Consumo energético acumulado total para el período 2024-2028 en GWh",
     nombre_archivo=r"C:\Users\emili\PycharmProjects\TesisUY\Gráficos\Proyección 5 años\comparacion consumo total GWh.png"
 )
-
-# --------------------------------------------------
-# Pie Chart: Distribución de emisiones BEV vs Sin BEV
-# Solo para los Escenarios 4, 5 y 6 y filtrado por la elasticidad ingresada,
-# acumulando datos del período 2024-2028.
-# Se crean 3 subplots, uno para cada escenario.
-# --------------------------------------------------
-
-# Filtrar el DataFrame para elasticidad deseada y el período 2024-2028
-df_pie = df_proyecciones[(df_proyecciones["Elasticidad"] == -1.87) &
-                         (df_proyecciones["Año"].between(2024, 2028))].copy()
-
-# Extraer el número del escenario (asumiendo que aparece un dígito en el nombre)
-df_pie["Numero_Escenario"] = df_pie["Escenario"].str.extract(r'(\d+)').astype(int)
-
-# Filtrar solo para los escenarios 4, 5 y 6
-df_pie = df_pie[df_pie["Numero_Escenario"].isin([4, 5, 6])]
-
-# Agrupar por "Escenario" y sumar las emisiones BEV y Sin BEV
-df_pie_grouped = df_pie.groupby("Escenario").agg({
-    "Emisiones CO2 BEV (ton)": "sum",
-    "Emisiones CO2 Sin BEV (ton)": "sum"
-}).reset_index()
-
-# Crear los subplots (pie charts) para cada escenario filtrado
-scenarios_for_pie = df_pie_grouped["Escenario"].unique()
-fig, axes = plt.subplots(1, len(scenarios_for_pie), figsize=(6*len(scenarios_for_pie), 6))
-if len(scenarios_for_pie) == 1:
-    axes = [axes]
-for ax, esc in zip(axes, scenarios_for_pie):
-    row = df_pie_grouped[df_pie_grouped["Escenario"] == esc].iloc[0]
-    bev_emissions = row["Emisiones CO2 BEV (ton)"]
-    sin_bev_emissions = row["Emisiones CO2 Sin BEV (ton)"]
-    data = [bev_emissions, sin_bev_emissions]
-    labels = ["BEV", "Sin BEV"]
-    ax.pie(data, labels=labels, autopct='%1.1f%%', startangle=90)
-    ax.set_title(f"Escenario {esc}")
-plt.suptitle(f"Distribución de emisiones CO2 (2024-2028)\nElasticidad = {-1.87}")
-plt.tight_layout()
-plt.savefig(r"C:\Users\emili\PycharmProjects\TesisUY\Gráficos\Proyección 5 años\pie emisiones scenarios filtrado.png", dpi=300)
-#plt.show()

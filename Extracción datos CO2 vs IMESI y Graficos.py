@@ -71,25 +71,25 @@ for imesi_value in unique_imesi:
         lower_whisker = max(subset[subset >= (q1 - 1.5 * iqr)].min(), subset.min())
         upper_whisker = min(subset[subset <= (q3 + 1.5 * iqr)].max(), subset.max())
         boxplot_data[imesi_value] = {
-            'Q1 (25%)': q1,
-            'Mediana (50%)': q2,
-            'Q3 (75%)': q3,
+            'Q1 (25%) CO2 (g/km)': q1,
+            'Mediana (50%) CO2 (g/km)': q2,
+            'Q3 (75%) CO2 (g/km)': q3,
             'IQR': iqr,
-            'Whisker inferior': lower_whisker,
-            'Whisker superior': upper_whisker,
-            'Outliers': list(subset[(subset < lower_whisker) | (subset > upper_whisker)].values)
+            'Valor extremo inferior CO2 (g/km)': lower_whisker,
+            'Valor extremo superior CO2 (g/km)': upper_whisker,
+            'Valores atípicos CO2 (g/km)': list(subset[(subset < lower_whisker) | (subset > upper_whisker)].values)
         }
 
 df_boxplot = pd.DataFrame.from_dict(boxplot_data, orient='index')
 df_boxplot['Categoría de Vehículo'] = df_boxplot.index.map(map_imesi)
-df_boxplot.index.name = 'IMESI [%]'
+df_boxplot.index.name = '% IMESI'
 df_boxplot['IMESI'] = df_boxplot.index.astype(float) / 100.0
 
 # Agregar la Media ponderada de CO2 para cada IMESI como nueva columna
 weighted_mean = df_clean.groupby('IMESI_x100').apply(
     lambda x: np.average(x['CO2 NEDC (g/km)'], weights=x['Procesados'])
 ).reindex(unique_imesi)
-df_boxplot['Media_Ponderada_CO2'] = weighted_mean.values
+df_boxplot['Mediana ponderada por ventas CO2 (g/km)'] = weighted_mean.values
 
 output_path_boxplot = r'C:\Users\emili\PycharmProjects\TesisUY\Datos CO2 vs IMESI 2023.xlsx'
 df_boxplot.to_excel(output_path_boxplot, index=True)
