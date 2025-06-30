@@ -5,18 +5,16 @@ import matplotlib.patches as mpatches
 import numpy as np
 import math
 
-# Ruta del archivo Excel y nombre de la hoja
+# Cargar base de datos del parque vehicular 2023
 path = r'C:\Users\emili\PycharmProjects\TesisUY\Base de datos 2023 - Prueba_output.xlsx'
 sheet = '2023'
-
-# Leer el archivo Excel
 df = pd.read_excel(path, sheet_name=sheet)
 
 # Convertir a numérico las columnas de interés
 df['CO2 NEDC (g/km)'] = pd.to_numeric(df['CO2 NEDC (g/km)'], errors='coerce')
 df['Procesados'] = pd.to_numeric(df['Procesados'], errors='coerce')
 
-# Filtrar datos: se requieren las columnas para el boxplot y para ventas totales
+# Filtrar datos. Se requieren las columnas para el boxplot y para ventas totales
 df_clean = df.dropna(subset=['CO2 NEDC (g/km)', 'Consumo (L/100 km)', 'IMESI (%)', 'Procesados'])
 df_clean = df_clean[df_clean['IMESI (%)'] != 0]
 
@@ -28,6 +26,7 @@ unique_imesi = sorted(df_clean['IMESI_x100'].unique())
 print("Valores únicos de IMESI_x100:", unique_imesi)
 
 # Diccionario para mapear las categorías de vehículo
+# Porcentajes y categorías corresponden a Decreto 390/021
 map_imesi = {
     2.0: 'PHEV (0 - 2.500 c.c.)',
     3.45: 'HEV (0 - 2.500 c.c.)',
@@ -44,21 +43,18 @@ map_imesi = {
 }
 
 ##############################################
-# 1. Ventas totales (Gráfico y guardado en Excel)
+# Paso 1: Calcular ventas totales por franja de IMESI
 ##############################################
 ventas_totales_por_imesi = df_clean.groupby('IMESI_x100')['Procesados'].sum().reindex(unique_imesi)
 
 df_resultados = ventas_totales_por_imesi.reset_index()
 df_resultados.columns = ['IMESI_x100', 'Ventas_Totales']
 df_resultados['IMESI (%)'] = df_resultados['IMESI_x100'] / 100.0
+# Asignar categoría de vehículo según % IMESI
 df_resultados['Categoría de Vehículo'] = df_resultados['IMESI_x100'].map(map_imesi)
 
-#output_path_sales = r'C:\Users\emili\PycharmProjects\TesisUY\Resultados_CO2_Ventas_IMESI.xlsx'
-#df_resultados.to_excel(output_path_sales, index=False)
-#print(f"Resultados de ventas guardados en: {output_path_sales}")
-
 ##############################################
-# 2. Estadísticas del boxplot (Gráfico y guardado en Excel)
+# Paso 2: Calcular estadísticas de CO₂ por franja de IMESI (boxplot)
 ##############################################
 boxplot_data = {}
 for imesi_value in unique_imesi:
@@ -75,8 +71,8 @@ for imesi_value in unique_imesi:
             'Mediana (50%) CO2 (g/km)': q2,
             'Q3 (75%) CO2 (g/km)': q3,
             'IQR': iqr,
-            'Valor extremo inferior CO2 (g/km)': lower_whisker,
-            'Valor extremo superior CO2 (g/km)': upper_whisker,
+            'Valor límite inferior CO2 (g/km)': lower_whisker,
+            'Valor límite superior CO2 (g/km)': upper_whisker,
             'Valores atípicos CO2 (g/km)': list(subset[(subset < lower_whisker) | (subset > upper_whisker)].values)
         }
 
@@ -89,14 +85,14 @@ df_boxplot['IMESI'] = df_boxplot.index.astype(float) / 100.0
 weighted_mean = df_clean.groupby('IMESI_x100').apply(
     lambda x: np.average(x['CO2 NEDC (g/km)'], weights=x['Procesados'])
 ).reindex(unique_imesi)
-df_boxplot['Mediana ponderada por ventas CO2 (g/km)'] = weighted_mean.values
+df_boxplot['CO₂ promedio ponderado por ventas (g/km)'] = weighted_mean.values
 
 output_path_boxplot = r'C:\Users\emili\PycharmProjects\TesisUY\Datos CO2 vs IMESI 2023.xlsx'
 df_boxplot.to_excel(output_path_boxplot, index=True)
 print(f"Datos de boxplot guardados en: {output_path_boxplot}")
 
 ##############################################
-# 3. Gráficos combinados: Boxplot y gráfico de barras de ventas totales
+# Paso 3: Generar gráfico combinado de boxplot (CO₂) y barras (ventas)
 ##############################################
 colors = sns.color_palette("tab20", n_colors=len(unique_imesi))
 
@@ -143,7 +139,7 @@ fig.savefig(r'C:\Users\emili\PycharmProjects\TesisUY\Gráficos\Boxplot CO2vsIMES
 #plt.show()
 
 ##############################################
-# 4. Histogramas por franja de IMESI: Distribución de CO2 ponderada por ventas
+# Paso 4: Histogramas de CO₂ ponderados por ventas, por franja IMESI
 ##############################################
 n_categories = len(unique_imesi)
 cols = 3  # Número de columnas para los subplots
@@ -179,10 +175,9 @@ plt.subplots_adjust(top=0.88, bottom=0.08, left=0.08, right=0.97, hspace=0.5, ws
 fig_hist.savefig(r'C:\Users\emili\PycharmProjects\TesisUY\Gráficos\Histograma de CO2, según volumen de ventas.png', dpi=300)
 #plt.show()
 
-#----------------------------------------------------------------------------------------------------------------
-# 5. Distribución de CO2 según acumulado de ventas por franja de IMESI
-# Los gráficos se separan en dos figuras para que se visualicen mejor al agregarlas a un texto
-#----------------------------------------------------------------------------------------------------------------
+##############################################
+# Paso 5: Distribución de CO₂ acumulado por ventas, por franja de IMESI
+##############################################
 
 # Colores para cada franja de IMESI
 colors_dict = {val: colors[i % len(colors)] for i, val in enumerate(unique_imesi)}
@@ -228,8 +223,6 @@ for j in range(i + 1, len(axes)):
     fig.delaxes(axes[j])
 
 fig.suptitle('Distribución de CO₂ según acumulado de ventas por franja IMESI', fontsize=14)
-#fig.text(0.5, 0.04, '% acumulado de ventas', ha='center', fontsize=12)
-#fig.text(0.04, 0.5, 'CO₂ NEDC (g/km)', va='center', rotation='vertical', fontsize=12)
 plt.subplots_adjust(top=0.88, bottom=0.08, left=0.08, right=0.97, hspace=0.5, wspace=0.35)
 fig.savefig(r'C:\Users\emili\PycharmProjects\TesisUY\Gráficos\Distribucion CO2 acumulado.png', dpi=300)
 plt.close(fig)
