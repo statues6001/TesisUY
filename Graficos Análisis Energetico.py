@@ -48,7 +48,9 @@ mapa_escenarios = {
     "Lineal Escenario 7 (E=-1.87)": "Escenario 7",
     "Lineal Escenario 8 (E=-1.87)": "Escenario 8",
     "Lineal Escenario 9 (E=-1.87)": "Escenario 9",
-    "Lineal Escenario 10 (E=-1.87)": "Escenario 10"
+    "Lineal Escenario 10 (E=-1.87)": "Escenario 10",
+    "Lineal Escenario 11 (E=-1.87)": "Escenario 11",
+    "Lineal Escenario 12 (E=-1.87)": "Escenario 12"
 }
 df_master["Escenario"] = df_master["Escenario"].replace(mapa_escenarios)
 

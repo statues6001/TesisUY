@@ -36,3 +36,46 @@ plt.grid(True)
 plt.tight_layout()
 plt.savefig(r'C:\Users\emili\PycharmProjects\TesisUY\Gráficos\Comparación de pendientes.png', dpi=300)
 plt.show()
+
+# -----------------------------------------------
+# Segunda gráfica: comparación Escenario 8 vs 11
+# -----------------------------------------------
+
+# Puntos de Escenario 8
+x1_8, y1_8 = 133.2, 0.23
+x2_8, y2_8 = 258.08, 0.66
+
+# Puntos de Escenario 11
+x1_11, y1_11 = 133.2, 0.28
+x2_11, y2_11 = 258.08, 0.96
+
+# Pendientes e intersecciones
+m_8 = (y2_8 - y1_8) / (x2_8 - x1_8)
+b_8 = y1_8 - m_8 * x1_8
+m_11 = (y2_11 - y1_11) / (x2_11 - x1_11)
+b_11 = y1_11 - m_11 * x1_11
+
+x = np.linspace(0, 300, 200)
+y_8 = m_8 * x + b_8
+y_11 = m_11 * x + b_11
+
+x_int2 = (b_11 - b_8) / (m_8 - m_11)
+
+# Gráfico 2
+plt.figure(figsize=(8, 5))
+plt.plot(x, y_8 * 100, label='Escenario 8', linewidth=2, color='orange')
+plt.plot(x, y_11 * 100, label='Escenario 11', linewidth=2, color='orangered')
+plt.axvline(x_int2, linestyle='--', color='gray', label=f'Intersección ≈ {x_int2:.1f} g/km')
+plt.scatter([x1_8, x2_8], [y1_8 * 100, y2_8 * 100], color='blue')
+plt.scatter([x1_11, x2_11], [y1_11 * 100, y2_11 * 100], color='orange')
+plt.xlabel('CO$_2$ (g/km)')
+plt.ylabel('Tasa IMESI (\%)')
+plt.title('Comparación de funciones IMESI vs CO$_2$ (Escenarios 8 y 11)')
+plt.ylim(0, 100)
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.savefig(r'C:\Users\emili\PycharmProjects\TesisUY\Gráficos\Comparación Escenario 8 vs 11.png', dpi=300)
+plt.show()
+
+

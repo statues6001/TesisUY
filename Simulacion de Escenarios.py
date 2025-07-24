@@ -252,6 +252,51 @@ parametros_lineal_esc10 = {
     ("UTILITARIO", "PHEV"): {"alpha": 0.00093648, "beta": -0.10656341}
 }
 
+parametros_lineal_esc11 = {
+    ("AUTOMOVIL", "N"): {"alpha": 0.00544524, "beta": -0.44532583},
+    ("AUTOMOVIL", "D"): {"alpha": 0.0, "beta": 1.15},
+    ("AUTOMOVIL", "BEV"): {"alpha": 0.0,   "beta": 0.0},
+    ("AUTOMOVIL", "HEV"): {"alpha": 0.00544524, "beta": -0.44532583},
+    ("AUTOMOVIL", "MHEV"): {"alpha": 0.00544524, "beta": -0.44532583},
+    ("AUTOMOVIL", "PHEV"): {"alpha": 0.00544524, "beta": -0.44532583},
+
+    ("SUV", "N"): {"alpha": 0.00544524, "beta": -0.44532583},
+    ("SUV", "D"): {"alpha": 0.0, "beta": 1.15},
+    ("SUV", "BEV"): {"alpha": 0.0,    "beta": 0.0},
+    ("SUV", "HEV"): {"alpha": 0.00544524, "beta": -0.44532583},
+    ("SUV", "MHEV"): {"alpha": 0.00544524, "beta": -0.44532583},
+    ("SUV", "PHEV"): {"alpha": 0.00544524, "beta": -0.44532583},
+
+    ("UTILITARIO", "N"): {"alpha": 0.00093648, "beta": -0.10656341},
+    ("UTILITARIO", "D"): {"alpha": 0.0, "beta": 0.347},
+    ("UTILITARIO", "BEV"): {"alpha": 0.0,    "beta": 0.0},
+    ("UTILITARIO", "HEV"): {"alpha": 0.00093648, "beta": -0.10656341},
+    ("UTILITARIO", "MHEV"): {"alpha": 0.00093648, "beta": -0.10656341},
+    ("UTILITARIO", "PHEV"): {"alpha": 0.00093648, "beta": -0.10656341}
+}
+
+parametros_lineal_esc12 = {
+    ("AUTOMOVIL", "N"): {"alpha": 0.00544524, "beta": -0.44532583},
+    ("AUTOMOVIL", "D"): {"alpha": 0.0, "beta": 1.15},
+    ("AUTOMOVIL", "BEV"): {"alpha": 0.0,   "beta": 0.0},
+    ("AUTOMOVIL", "HEV"): {"alpha": 0.00544524, "beta": -0.44532583},
+    ("AUTOMOVIL", "MHEV"): {"alpha": 0.00544524, "beta": -0.44532583},
+    ("AUTOMOVIL", "PHEV"): {"alpha": 0.00544524, "beta": -0.44532583},
+
+    ("SUV", "N"): {"alpha": 0.00544524, "beta": -0.44532583},
+    ("SUV", "D"): {"alpha": 0.0, "beta": 1.15},
+    ("SUV", "BEV"): {"alpha": 0.0,    "beta": 0.0},
+    ("SUV", "HEV"): {"alpha": 0.00544524, "beta": -0.44532583},
+    ("SUV", "MHEV"): {"alpha": 0.00544524, "beta": -0.44532583},
+    ("SUV", "PHEV"): {"alpha": 0.00544524, "beta": -0.44532583},
+
+    ("UTILITARIO", "N"): {"alpha": 0.00093648, "beta": -0.10656341},
+    ("UTILITARIO", "D"): {"alpha": 0.0, "beta": 0.347},
+    ("UTILITARIO", "BEV"): {"alpha": 0.0,    "beta": 0.0},
+    ("UTILITARIO", "HEV"): {"alpha": 0.00093648, "beta": -0.10656341},
+    ("UTILITARIO", "MHEV"): {"alpha": 0.00093648, "beta": -0.10656341},
+    ("UTILITARIO", "PHEV"): {"alpha": 0.00093648, "beta": -0.10656341}
+}
 
 def imesi_lineal_porcentaje(row, alpha=0.002, beta=0.10):
     co2 = row["CO2 NEDC (g/km)"]
@@ -522,6 +567,24 @@ for elasticidad in elasticidades:
             "elasticidad": elasticidad
     })
 
+# Carga Escenario Lineal 11
+for elasticidad in elasticidades:
+    escenarios.append({
+            "nombre": f"Lineal Escenario 11 (E={elasticidad})",
+            "func_imesi": lambda row, p=parametros_lineal_esc11: imesi_lineal_por_categoria(row, p),
+            "elasticidad": elasticidad
+    })
+
+# Carga Escenario Lineal 12 (elasticidad variable)
+for elasticidad in elasticidades:
+    escenarios.append({
+        "nombre": f"Lineal Escenario 12 (E={elasticidad})",
+        "func_imesi": lambda row, p=parametros_lineal_esc12: imesi_lineal_por_categoria(row, p),
+        "elasticidad": elasticidad,
+        "elasticidad_variable": True,
+        "pct_elasticidad_baratos": 0.5,
+        "pct_elasticidad_baratos_bajada": 1.5
+    })
 
 # Ordenar escenarios por nombre
 #escenarios.sort(key=lambda x: (x["nombre"]))

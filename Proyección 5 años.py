@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
 import re
+import math
 
 archivo_resultados = "Salida Escenarios.xlsx"
 df_resumen = pd.read_excel(archivo_resultados, sheet_name="Resumen Escenarios")
@@ -21,9 +22,10 @@ mapa_escenarios = {
     "Lineal Escenario 7 (E=-1.87)": "Escenario 7",
     "Lineal Escenario 8 (E=-1.87)": "Escenario 8",
     "Lineal Escenario 9 (E=-1.87)": "Escenario 9",
-    "Lineal Escenario 10 (E=-1.87)": "Escenario 10"
+    "Lineal Escenario 10 (E=-1.87)": "Escenario 10",
+    "Lineal Escenario 11 (E=-1.87)": "Escenario 11",
+    "Lineal Escenario 12 (E=-1.87)": "Escenario 12"
 }
-
 
 ventas_no_bev_base = df_resumen["Ventas Año Base (Sin BEV)"].iloc[0]
 ventas_bev_base = df_resumen["Ventas BEV Año Base"].iloc[0]
@@ -31,94 +33,78 @@ consumo_sin_bev_año_base_unidad = df_resumen["Consumo Año Base (sin BEV) (tep)
 consumo_bev_año_base_unidad = df_resumen["Consumo eléctrico Año Base BEV (tep)/Unidad"].iloc[0]
 consumo_año_base = (ventas_no_bev_base * consumo_sin_bev_año_base_unidad) + (ventas_bev_base * consumo_bev_año_base_unidad)
 
-# Escenarios porcentaje de participación de eléctricos de 8.9% en 2024. Dato real.
-escenarios_penetracion = {
-    "Pesimista": [8.9, 10, 11, 12, 13],
-    "Tendencial": [8.9, 12, 15, 18, 22],
-    "Acelerado": [8.9, 15, 23, 32, 40]
+# Factores de crecimiento acumulativo de BEV para cada escenario
+crecimiento_penetracion = {
+    "Pesimista": 1.20,     # 20% anual
+    "Tendencial": 1.40,    # 40% anual
+    "Acelerado": 1.60      # 60% anual
 }
 
-# Ventas totales de vehículos
-ventas_base_2023 = 57183  # ventas año base
-ventas_totales_2024_adelante = 57183  # ventas proyectadas. Se toman constantes.
-# 65909 ventas reales en 2024
+ventas_totales_constante = 57183  # Ventas anuales constantes proyectadas
 
 resultados_proyeccion = []
 
-# Iterar cada escenario IMESI de de la hoja Resumen Escenarios
 for idx, fila in df_resumen.iterrows():
     escenario_base = fila["Escenario"]
 
-    # Variables constantes IMESI desde Excel
     imesi_sin_bev_escenario_unidad = fila["Recaudación IMESI Escenario (Sin BEV) / Unidad"]
     imesi_bev_escenario_unidad = fila["Recaudación IMESI Escenario BEV / Unidad"]
 
-    # Recaudación total IMESI año base (2023) desde Excel original para cada escenario
     recaudacion_año_base_total = fila["Recaudación IMESI Año Base (Sin BEV) (USD)"] + fila["Recaudación IMESI Año Base BEV (USD)"]
 
-    # Consumo sin BEV y BEV
     consumo_sin_bev_tep_escenario = fila["Consumo Escenario (sin BEV) (tep)/Unidad"]
     consumo_bev_tep_escenario = fila["Consumo eléctrico Escenario BEV (tep)/Unidad"]
 
-
-    #Factores de emision por unidad
     emisiones_bev_año_base_unidad = fila["Emisiones BEV CO2 Año Base (ton)/Unidad"]
     emisiones_bev_escenario_unidad = fila["Emisiones BEV CO2 Escenario (ton)/Unidad"]
     emisiones_sin_bev_año_base_unidad = fila["Emisiones Sin BEV CO2 Año Base (ton)/Unidad"]
     emisiones_sin_bev_escenario_unidad = fila["Emisiones Sin BEV CO2 Escenario (ton)/Unidad"]
 
-    # Calcular emisiones en el año base (fijas para cada escenario)
-    emisiones_año_base = (ventas_bev_base * emisiones_bev_año_base_unidad) + (
-                ventas_no_bev_base * emisiones_sin_bev_año_base_unidad)
+    emisiones_año_base = (ventas_bev_base * emisiones_bev_año_base_unidad) + (ventas_no_bev_base * emisiones_sin_bev_año_base_unidad)
 
-    # Proyección para cada escenario de penetración BEV desde 2024 a 2028
-    for tipo_penetracion, penetraciones in escenarios_penetracion.items():
-        for año_offset, bev_pct in enumerate(penetraciones, start=1):
+    ventas_bev_escenario_inicial = fila["Ventas BEV Escenario"]
+    ventas_no_bev_escenario = fila["Ventas Escenario (Sin BEV)"]
+    ventas_totales_escenario = ventas_bev_escenario_inicial + ventas_no_bev_escenario
+
+    caida_vs_base = ventas_totales_constante - ventas_totales_escenario
+    ventas_bev_2024 = ventas_bev_escenario_inicial + max(caida_vs_base, 0)
+
+    for tipo_penetracion, factor in crecimiento_penetracion.items():
+        ventas_bev = ventas_bev_2024
+
+        for año_offset in range(1, 6):
             año = 2023 + año_offset
+            if año != 2024:
+                ventas_bev *= factor
 
-            # Ventas anuales: 2024 en adelante se usan ventas actualizadas
-            ventas_totales = ventas_totales_2024_adelante if año >= 2024 else ventas_base_2023
+            ventas_bev = min(ventas_bev, ventas_totales_constante)
+            ventas_no_bev = ventas_totales_constante - ventas_bev
 
-            ventas_bev_escenario = ventas_totales * (bev_pct / 100)
-            ventas_sin_bev_escenario = ventas_totales - ventas_bev_escenario
-
-            recaudacion_imesi_escenario = (ventas_bev_escenario * imesi_bev_escenario_unidad) + (ventas_sin_bev_escenario * imesi_sin_bev_escenario_unidad)
-
-            # Diferencia respecto al año base real del escenario original (2023)
+            recaudacion_imesi_escenario = (ventas_bev * imesi_bev_escenario_unidad) + (ventas_no_bev * imesi_sin_bev_escenario_unidad)
             diferencia_recaudacion = recaudacion_imesi_escenario - recaudacion_año_base_total
 
-            # -----------------------------------------------------------------
-            # Cálculo del consumo energético en tep
-            # -----------------------------------------------------------------
-            consumo_energetico_sin_bev_escenario = ventas_sin_bev_escenario * consumo_sin_bev_tep_escenario
-            consumo_energetico_bev_escenario = ventas_bev_escenario * consumo_bev_tep_escenario
+            consumo_energetico_sin_bev_escenario = ventas_no_bev * consumo_sin_bev_tep_escenario
+            consumo_energetico_bev_escenario = ventas_bev * consumo_bev_tep_escenario
             consumo_energetico_total_escenario = consumo_energetico_sin_bev_escenario + consumo_energetico_bev_escenario
 
-            # -----------------------------------------------------------------
-            # Cálculo del consumo energético en GWh
-            # Factor de conversión: 1 tep = 0.01163 GWh
-            # -----------------------------------------------------------------
-            consumo_energetico_sin_bev_escenario_GWh = consumo_energetico_sin_bev_escenario*0.01163
-            consumo_energetico_bev_escenario_GWh = consumo_energetico_bev_escenario*0.01163
-            consumo_energetico_total_escenario_GWh = consumo_energetico_total_escenario*0.01163
-            consumo_año_base_GWh = consumo_año_base*0.01163
+            consumo_energetico_sin_bev_escenario_GWh = consumo_energetico_sin_bev_escenario * 0.01163
+            consumo_energetico_bev_escenario_GWh = consumo_energetico_bev_escenario * 0.01163
+            consumo_energetico_total_escenario_GWh = consumo_energetico_total_escenario * 0.01163
+            consumo_año_base_GWh = consumo_año_base * 0.01163
 
-            # -----------------------------------------------------------------
-            # Cálculo de emisiones (CO2 en ton)
-            # -----------------------------------------------------------------
-            emisiones_sin_bev = ventas_sin_bev_escenario * emisiones_sin_bev_escenario_unidad
-            emisiones_bev = ventas_bev_escenario * emisiones_bev_escenario_unidad
+            emisiones_sin_bev = ventas_no_bev * emisiones_sin_bev_escenario_unidad
+            emisiones_bev = ventas_bev * emisiones_bev_escenario_unidad
             emisiones_total = emisiones_sin_bev + emisiones_bev
 
             resultados_proyeccion.append({
                 "Escenario": escenario_base,
                 "Tipo de penetración": tipo_penetracion,
                 "Año": año,
-                "% Participación BEV": bev_pct,
-                "Ventas BEV": ventas_bev_escenario,
-                "Ventas No-BEV": ventas_sin_bev_escenario,
-                "Recaudación IMESI BEV (USD)": ventas_bev_escenario * imesi_bev_escenario_unidad,
-                "Recaudación IMESI No-BEV (USD)": ventas_sin_bev_escenario * imesi_sin_bev_escenario_unidad,
+                "% Participación BEV": (ventas_bev / ventas_totales_constante) * 100,
+                "Ventas BEV": ventas_bev,
+                "Ventas No-BEV": ventas_no_bev,
+                "Recaudación IMESI BEV (USD)": ventas_bev * imesi_bev_escenario_unidad,
+                "Recaudación IMESI No-BEV (USD)": ventas_no_bev * imesi_sin_bev_escenario_unidad,
                 "Recaudación IMESI Total (USD)": recaudacion_imesi_escenario,
                 "Diferencia IMESI vs Año Base 2023 (USD)": diferencia_recaudacion,
                 "Consumo Energético Sin BEV (tep)": consumo_energetico_sin_bev_escenario,
@@ -178,28 +164,50 @@ plt.rcParams['figure.figsize'] = (10, 6)
 escenarios = df_proyecciones["Tipo de penetración"].unique()
 
 # -------------------------------------------------------------------------------------------------------------------
-# Gráfico 1 - Evolución de la participación BEV (%) por escenario
+# Gráfico - Evolución de la participación BEV (%) solo para escenarios con E = -1,87
 # -------------------------------------------------------------------------------------------------------------------
-# Eliminar filas duplicadas para el gráfico 1
-df_plot1 = df_proyecciones.drop_duplicates(subset=["Tipo de penetración", "Año", "% Participación BEV"])
+import math  # Asegurate de tener esta línea arriba en tus imports
 
-escenarios = df_plot1["Tipo de penetración"].unique()
+# Filtrar solo escenarios con E = -1,87
+df_plot = df_proyecciones[df_proyecciones["Escenario"].str.contains("E=-1.87")].copy()
 
-plt.figure()
-for escenario in escenarios:
-    datos = df_plot1[df_plot1["Tipo de penetración"] == escenario]
-    plt.plot(datos["Año"], datos["% Participación BEV"], marker='o', label=escenario)
+# Eliminar duplicados y crear etiqueta
+df_plot = df_plot.drop_duplicates(subset=["Escenario", "Tipo de penetración", "Año", "% Participación BEV"])
 
-plt.title('Evolución de la participación BEV (%) en las ventas de 0 km')
-plt.xlabel('Año')
-plt.ylabel('% Participación BEV en ventas 0 km')
-plt.grid(True, linestyle='--', alpha=0.6)
-plt.legend()
-ax = plt.gca()
-ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
-plt.tight_layout()
-plt.savefig(r"C:\Users\emili\PycharmProjects\TesisUY\Gráficos\Proyección 5 años\grafico participacion BEV.png", dpi=300)
-##plt.show()
+# Obtener lista única de escenarios base
+escenarios_base = df_plot["Escenario"].unique()
+n = len(escenarios_base)
+
+# Crear figura con subplots: ajustar layout según cuántos escenarios haya
+fig, axes = plt.subplots(nrows=math.ceil(n / 3), ncols=3, figsize=(16, 4 * math.ceil(n / 3)), sharey=True)
+
+# Aplanar ejes en caso de múltiples filas
+axes = axes.flatten()
+
+for i, escenario in enumerate(escenarios_base):
+    ax = axes[i]
+    datos_escenario = df_plot[df_plot["Escenario"] == escenario]
+
+    for tipo in ["Pesimista", "Tendencial", "Acelerado"]:
+        datos_tipo = datos_escenario[datos_escenario["Tipo de penetración"] == tipo]
+        ax.plot(datos_tipo["Año"], datos_tipo["% Participación BEV"], marker='o', label=tipo)
+
+    ax.set_title(escenario.replace("(E=-1.87)", "").strip())
+    ax.set_xlabel("Año")
+    if i % 3 == 0:
+        ax.set_ylabel("% Participación BEV")
+    ax.grid(True, linestyle='--', alpha=0.5)
+    ax.legend()
+    ax.xaxis.set_major_locator(ticker.MaxNLocator(integer=True))
+
+# Ocultar subplots vacíos si hay
+for j in range(i + 1, len(axes)):
+    fig.delaxes(axes[j])
+
+fig.suptitle("Proyección de participación BEV por escenario y tipo de penetración - Elasticidad -1,87", fontsize=14)
+plt.tight_layout(rect=[0, 0, 1, 0.97])
+plt.savefig(r"C:\Users\emili\PycharmProjects\TesisUY\Gráficos\Proyección 5 años\grafico_participacion_BEV.png", dpi=300)
+# plt.show()
 
 # -------------------------------------------------------------------------------------------------------------------
 # Gráfico 2: Diferencia IMESI vs Año Base millones 2023 (USD). Filtrado por Elasticidad y Escenario deseado
@@ -215,7 +223,7 @@ df_plot2 = df_grafico2.copy()
 df_plot2["EscenarioGraf"] = df_plot2["Escenario"].replace(mapa_escenarios)
 
 # Filtrar escenarios específicos: se usa .str.contains para buscar cualquiera de los patrones indicados
-escenarios_deseados = ["Escenario 4", "Escenario 8", "Escenario 9", "Escenario 10"]
+escenarios_deseados = ["Escenario 4", "Escenario 8", "Escenario 9", "Escenario 10", "Escenario 12"]
 pattern = '|'.join(escenarios_deseados)
 df_filtrado = df_plot2[df_plot2["EscenarioGraf"].str.contains(pattern)]
 
@@ -566,3 +574,88 @@ generar_grafico_GWh(
     titulo="Consumo energético acumulado total para el período 2024-2028 en GWh",
     nombre_archivo=r"C:\Users\emili\PycharmProjects\TesisUY\Gráficos\Proyección 5 años\comparacion consumo total GWh.png"
 )
+########################################################
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Cargar datos (ajustá la ruta según tu archivo)
+df = pd.read_excel("Proyección 5 años.xlsx")
+
+# Filtrar solo año 2024 y elasticidad -1,87
+df_2024 = df[
+    (df["Año"] == 2024) &
+    (df["Escenario"].str.contains("E=-1.87"))
+].copy()
+
+# Limpiar nombres de escenarios para mejor visualización
+df_2024["Escenario limpio"] = df_2024["Escenario"].str.replace("(E=-1.87)", "", regex=False).str.strip()
+
+# Agrupar por escenario limpio y sumar ventas BEV y No-BEV
+df_plot = df_2024.groupby("Escenario limpio")[["Ventas BEV", "Ventas No-BEV"]].sum().reset_index()
+
+# Crear gráfico de barras apiladas
+plt.figure(figsize=(12, 6))
+plt.bar(df_plot["Escenario limpio"], df_plot["Ventas No-BEV"], label="No-BEV", color="#a6bddb")
+plt.bar(df_plot["Escenario limpio"], df_plot["Ventas BEV"], bottom=df_plot["Ventas No-BEV"], label="BEV", color="#1c9099")
+
+plt.xticks(rotation=45, ha="right")
+plt.ylabel("Ventas iniciales en 2024")
+plt.title("Ventas BEV vs No-BEV en 2024 por escenario (E = -1,87)")
+plt.legend()
+plt.grid(axis="y", linestyle="--", alpha=0.5)
+plt.tight_layout()
+plt.savefig("grafico_ventas_iniciales_2024.png", dpi=300)
+# plt.show()
+
+
+
+# --------------------------------------------------
+# Gráfico: Distribución de ventas BEV y No-BEV en 2024
+# Elasticidad = -1.87
+# --------------------------------------------------
+df_tendencial_2024 = df_proyecciones[
+    (df_proyecciones["Año"] == 2024) &
+    (df_proyecciones["Elasticidad"] == -1.87) &
+    # Se agrega esta línea para que el código no sume las distintas penetraciones.
+    # Las tres penetraciones dan valores iguales en el año 2024 para cada escenario.
+    (df_proyecciones["Tipo de penetración"] == "Tendencial")
+].copy()
+
+# Limpiar y renombrar escenario para visualización
+df_tendencial_2024["Escenario limpio"] = df_tendencial_2024["Escenario"].str.replace("(E=-1.87)", "", regex=False).str.strip()
+
+# Ordenar numéricamente por número de escenario
+def obtener_numero(escenario):
+    match = re.search(r'\d+', escenario)
+    return int(match.group()) if match else 0
+
+df_tendencial_2024["Orden"] = df_tendencial_2024["Escenario limpio"].apply(obtener_numero)
+df_tendencial_2024.sort_values("Orden", inplace=True)
+
+# Gráfico de barras apiladas
+plt.figure(figsize=(12, 6))
+plt.bar(df_tendencial_2024["Escenario limpio"], df_tendencial_2024["Ventas No-BEV"], label="No-BEV", color="#a6bddb")
+plt.bar(df_tendencial_2024["Escenario limpio"], df_tendencial_2024["Ventas BEV"],
+        bottom=df_tendencial_2024["Ventas No-BEV"], label="BEV", color="#1c9099")
+
+# Calcular y anotar los porcentajes BEV encima de cada barra
+for i, row in df_tendencial_2024.iterrows():
+    total = row["Ventas BEV"] + row["Ventas No-BEV"]
+    pct_bev = (row["Ventas BEV"] / total) * 100
+    plt.text(
+        x=row["Escenario limpio"],
+        y=total + 1000,  # pequeño offset para que no se superponga con la barra
+        s=f"{pct_bev:.1f}%",
+        ha='center',
+        fontsize=9
+    )
+
+plt.xticks(rotation=45, ha="right")
+plt.ylabel("Ventas en 2024")
+plt.title("Distribución de ventas BEV vs No-BEV en 2024\n(Penetración Tendencial, E = -1,87)")
+plt.legend()
+plt.grid(axis="y", linestyle="--", alpha=0.5)
+plt.tight_layout()
+plt.savefig(r"C:\Users\emili\PycharmProjects\TesisUY\Gráficos\Proyección 5 años\ventas_2024_bev_no_bev.png", dpi=300)
+# plt.show()
+
